@@ -184,19 +184,25 @@ public class Handler implements Runnable {
 
     private void processChDir(byte[] buffer) {
         String path = new String(buffer).trim();
-        if (path.equals(".")) {
-            return;
-        } else if (path.equals("..")) {
+        String result = curDir;
+        if (path.equals("..")) {
             File f = new File(curDir);
             curDir = f.getParent();
         } else {
             File f = new File(path);
             if (f.exists()) {
+                if (!f.isDirectory()) {
+                    writeToClient("Not directory\n", "400", "ERR");
+                    return;
+                }
                 curDir = f.getAbsolutePath();
             } else {
+                writeToClient("Dir not exists\n", "400", "ERR");
                 return;
             }
         }
+
+        writeToClient(curDir, "200", "RST");
     }
 
     private void processPutFile(byte[] buffer) {

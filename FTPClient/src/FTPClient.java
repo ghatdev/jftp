@@ -48,7 +48,16 @@ public class FTPClient {
     public void cmdList(String path) {
         byte[] cmd = makeCommand("LIST", path.getBytes());
         send(cmd);
-        System.out.print(new String(read()));
+
+        byte[] received;
+        try {
+            received = read();
+        }catch (JobFailedException e) {
+            System.err.printf("%s: %s\n", "Failed", e.getError());
+            return;
+        }
+
+        System.out.print(new String(received));
     }
 
     public void quitConn() {
@@ -89,6 +98,16 @@ public class FTPClient {
     }
 
     public void cmdGet(String file) {
+        send(makeCommand("GET", file.getBytes()));
+
+        byte[] received;
+        try {
+            received = read();
+        } catch (JobFailedException e) {
+            System.err.printf("%s: %s\n", "Failed", e.getError());
+            return;
+        }
+
         FileOutputStream fileOutputStream;
         File f = new File(file);
         if (!f.exists()) {
@@ -107,8 +126,6 @@ public class FTPClient {
             return;
         }
 
-        byte[] received = read();
-
         try {
             fileOutputStream.write(Arrays.copyOfRange(received,255, received.length));
         } catch (IOException e) {
@@ -118,6 +135,15 @@ public class FTPClient {
 
     public void cmdCd(String path) {
         send(makeCommand("CD", path.getBytes()));
+        byte[] result;
+        try {
+            result = read();
+        } catch (JobFailedException e) {
+            System.err.printf("%s: %s\n", "Failed", e.getError());
+            return;
+        }
+
+        System.out.println(new String(result));
     }
 
     private int send(byte[] buffer) {
@@ -131,7 +157,7 @@ public class FTPClient {
         return buffer.length;
     }
 
-    private byte[] read() {
+    private byte[] read() throws JobFailedException {
         byte[] header = new byte[12];
         try {
             inputStream.read(header, 0, 12);
@@ -141,6 +167,7 @@ public class FTPClient {
 
         String type = new String(Arrays.copyOfRange(header, 0, 4)).trim();
         String statusCode = new String(Arrays.copyOfRange(header, 4, 8)).trim();
+
         int dataLen = Integer.parseInt(new String(Arrays.copyOfRange(header, 8, 12)).trim());
 
         byte[] buffer = new byte[dataLen];
@@ -149,6 +176,10 @@ public class FTPClient {
             inputStream.read(buffer, 0, dataLen);
         } catch (IOException e){
             e.printStackTrace();
+        }
+
+        if (type.equals("ERR") && !statusCode.equals("200")){
+            throw new JobFailedException(new String(buffer));
         }
 
         return buffer;
@@ -186,6 +217,17 @@ public class FTPClient {
         }
 
         return result;
+    }
+
+    private class JobFailedException extends Exception {
+        private String error;
+        public JobFailedException(String error) {
+            this.error = error;
+        }
+
+        public String getError() {
+            return this.error;
+        }
     }
 
 }
