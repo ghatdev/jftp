@@ -97,6 +97,8 @@ public class Client {
         byte[] cmd = makeCommand("PUT", bf.array());
 
         send(cmd);
+
+        System.out.printf("%s transferred / %d bytes\n", f.getName(), f.length());
     }
 
     public void cmdGet(String file) {
@@ -109,6 +111,8 @@ public class Client {
             System.err.printf("%s: %s\n", "Failed", e.getError());
             return;
         }
+
+        System.out.printf("Received %s / %d bytes\n", file, received.length);
 
         FileOutputStream fileOutputStream;
         File f = new File(file);

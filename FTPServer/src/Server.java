@@ -40,8 +40,8 @@ public class Server {
             }
 
             if (handler != null ){
-                //new Thread(handler).start();
-                handler.run();
+                new Thread(handler).start();
+                //handler.run();
             }
         }
     }

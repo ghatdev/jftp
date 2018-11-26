@@ -1,7 +1,3 @@
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-
 // TODO: Exception handling
 
 public class FTPServer {
